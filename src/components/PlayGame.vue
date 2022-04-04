@@ -1,83 +1,98 @@
 <script lang="ts">
+import { ref } from "vue";
 export interface IItem {
   id: number;
   player: "o" | "x" | undefined;
 }
 
+export interface IData {
+  items: IItem[];
+  currentPlayer: "o" | "x" | undefined;
+  supporter: { [key: number]: number };
+  winner: string | undefined;
+}
+
+export interface IMethod extends IData {
+  click: (item: IItem) => void;
+  check: () => void;
+  reset: () => void;
+  initItem: () => void;
+}
+
 export default {
   name: "PlayGame",
-  data() {
-    return {
-      items: Array.from({ length: 12 }).map((e, i) => ({
-        id: i + 1,
-        player: undefined
-      })) as IItem[],
-      currentPlayer: "o" as "o" | "x" | undefined,
-      supporter: {
-        1: 0,
-        2: 1,
-        3: 2,
-        4: 0,
-        5: 1,
-        6: 2,
-        7: 0,
-        8: 1,
-        9: 2,
-        10: 0,
-        11: 1,
-        12: 2
-      },
-      winner: undefined
+  setup() {
+    let items = ref(Array.from({length: 12}).map((e, i) => ({
+      id: i + 1,
+      player: undefined
+    })) as IItem[]);
+    let currentPlayer: "o" | "x" | undefined = "o";
+    let supporter: { [key: number]: number } = {
+      1: 0,
+      2: 1,
+      3: 2,
+      4: 0,
+      5: 1,
+      6: 2,
+      7: 0,
+      8: 1,
+      9: 2,
+      10: 0,
+      11: 1,
+      12: 2
     };
-  },
-  methods: {
-    click(item: IItem): void {
+    let winner: string | undefined = undefined;
+    function click(item: IItem): void {
       if (item.player) {
         return;
       }
-      item.player = this.currentPlayer;
+      item.player = currentPlayer;
 
-      this.check();
+      setTimeout(() => {
+        check();
 
-      if (this.winner) {
-        return;
-      }
-      this.currentPlayer = this.currentPlayer === "o" ? "x" : "o";
-    },
-    check(): void {
-      const items = this.items.filter((e) => e.player === this.currentPlayer);
-      if (items.length < 3) {
+        if (winner) {
+          return;
+        }
+        currentPlayer = currentPlayer === "o" ? "x" : "o";
+      });
+    }
+    function check(): void {
+      const ownItems = items.value.filter((e) => e.player === currentPlayer);
+      if (ownItems.length < 3) {
         return;
       }
       const conditions: number[][] = [[], [], []];
-      items.forEach((e: IItem) => {
-        const position: number = this.supporter[e.id];
+      ownItems.forEach((e: IItem) => {
+        const position: number = supporter[e.id];
         conditions[position].push(e.id);
       });
       const check = conditions.some((e) => e.length === 4);
       if (!check) {
-        const filter = this.items.filter((e) => !!e.player);
+        const filter = items.value.filter((e) => !!e.player);
         if (filter.length === 12) {
-          console.log("Tie");
-          this.initItem();
+          alert("Tie");
+          initItem();
         }
         return;
       }
-      console.log("Winner is " + this.currentPlayer);
-      this.initItem();
-      this.reset();
-    },
-    reset(): void {
-      this.currentPlayer = this.winner === "o" ? "x" : "o";
-      this.winner = undefined;
-    },
-    initItem(): void {
-      this.items = Array.from({ length: 12 }).map((e, i) => ({
+      alert("Winner is " + currentPlayer);
+      initItem();
+      reset();
+    }
+    function reset(): void {
+      currentPlayer = winner === "o" ? "x" : "o";
+      winner = undefined;
+    }
+    function initItem(): void {
+      items.value = Array.from({length: 12}).map((e, i) => ({
         id: i + 1,
         player: undefined
       })) as IItem[];
     }
-  }
+
+    return {items, click};
+  },
 };
 </script>
 
@@ -85,14 +100,14 @@ export default {
   <div class="root">
     <div class="container">
       <div
-        class="item"
-        v-for="item in items"
-        v-bind:key="item.id"
-        v-on:click="click(item)"
+          class="item"
+          v-for="item in items"
+          :key="item.id"
+          @click="click(item)"
       >
         <span
-          v-if="item.player"
-          v-bind:class="(item.player ? item.player : '')"
+            v-if="item.player"
+            :class="(item.player ? item.player : '')"
         >
           {{ item.player }}
         </span>
